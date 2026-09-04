@@ -39,8 +39,7 @@ def registrar():
         supabase.table("pacientes").insert({
             "nombre": "María López",
             "dni": "87654321",
-            "celular": "988888888",
-            "asistencia": True
+            "celular": "988888888"
         }).execute()
         return "Paciente registrado en Supabase", 201
     except Exception:

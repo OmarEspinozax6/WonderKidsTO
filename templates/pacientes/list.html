@@ -2,14 +2,13 @@
 {% block title %}Pacientes | WonderKids{% endblock %}
 {% block content %}
   <div class="page-heading"><div><p class="eyebrow">Historias clinicas</p><h1>Pacientes</h1><p class="muted">Consulta y administra las historias del centro.</p></div><a class="button primary" href="{{ url_for('pacientes.paciente_new_page') }}">+ Nuevo paciente</a></div>
-  <h2>Pacientes</h2>
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}<p class="{{ category }}">{{ message }}</p>{% endfor %}
   {% endwith %}
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
-  <table><thead><tr><th>Nombre</th><th>DNI</th><th>Celular</th><th>Asistencia</th><th>Acciones</th></tr></thead>
+  <table><thead><tr><th>Nombre</th><th>DNI</th><th>Celular</th><th>Estado</th><th>Acciones</th></tr></thead>
     <tbody id="pacientes-body">
-    {% for paciente in pacientes %}<tr data-id="{{ paciente.id }}"><td>{{ paciente.nombre }}</td><td>{{ paciente.dni }}</td><td>{{ paciente.celular }}</td><td>{{ 'Si' if paciente.asistencia else 'No' }}</td><td><a href="{{ url_for('pacientes.paciente_edit_page', id=paciente.id) }}">Editar</a> <button type="button" data-delete-id="{{ paciente.id }}">Eliminar</button></td></tr>
+    {% for paciente in pacientes %}<tr data-id="{{ paciente.id }}"><td>{{ paciente.nombre }}</td><td>{{ paciente.dni }}</td><td>{{ paciente.celular }}</td><td>{{ 'Activo' if paciente.activo else 'Inactivo' }}</td><td><a href="{{ url_for('pacientes.paciente_edit_page', id=paciente.id) }}">Editar</a> <button type="button" data-delete-id="{{ paciente.id }}">Eliminar</button></td></tr>
     {% else %}<tr><td colspan="5">No hay pacientes.</td></tr>{% endfor %}
     </tbody>
   </table>

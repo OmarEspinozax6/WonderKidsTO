@@ -5,7 +5,11 @@ from typing import Any
 import extensions
 
 
-REQUIRED_FIELDS = ("nombre", "dni", "celular", "asistencia")
+REQUIRED_FIELDS = ("nombre", "dni", "celular")
+PATIENT_FIELDS = {
+    "nombre", "dni", "celular", "fecha_nacimiento", "contacto_familiar",
+    "diagnostico", "observaciones", "activo",
+}
 
 
 def _validate_data(data: Any) -> str | None:
@@ -18,8 +22,8 @@ def _validate_data(data: Any) -> str | None:
     for field in ("nombre", "dni", "celular"):
         if not isinstance(data[field], str) or not data[field].strip():
             return f"El campo '{field}' debe ser un string no vacio."
-    if not isinstance(data["asistencia"], bool):
-        return "El campo 'asistencia' debe ser booleano."
+    if "activo" in data and not isinstance(data["activo"], bool):
+        return "El campo 'activo' debe ser booleano."
     return None
 
 
@@ -64,7 +68,8 @@ def create_paciente(data: dict) -> dict:
     if extensions.supabase is None:
         return _result(error="Supabase no esta configurado.")
     try:
-        response = extensions.supabase.table("pacientes").insert(data).execute()
+        patient_data = {field: value for field, value in data.items() if field in PATIENT_FIELDS}
+        response = extensions.supabase.table("pacientes").insert(patient_data).execute()
         return _result(data=(response.data or [None])[0])
     except Exception as exc:
         return _result(error=str(exc))
@@ -78,7 +83,8 @@ def update_paciente(id: str, data: dict) -> dict:
     if extensions.supabase is None:
         return _result(error="Supabase no esta configurado.")
     try:
-        response = extensions.supabase.table("pacientes").update(data).eq("id", id).execute()
+        patient_data = {field: value for field, value in data.items() if field in PATIENT_FIELDS}
+        response = extensions.supabase.table("pacientes").update(patient_data).eq("id", id).execute()
         return _result(data=(response.data or [None])[0], error=None if response.data else "Paciente no encontrado.")
     except Exception as exc:
         return _result(error=str(exc))

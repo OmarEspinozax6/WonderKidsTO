@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const data = Object.fromEntries(new FormData(form));
-      data.asistencia = form.elements.asistencia.checked;
+      data.activo = form.elements.activo.checked;
       const id = form.dataset.id;
       const response = await fetch(id ? `/api/pacientes/${id}` : "/api/pacientes", {
         method: id ? "PUT" : "POST",

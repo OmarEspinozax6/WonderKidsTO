@@ -6,7 +6,11 @@
     <label>Nombre <input name="nombre" required value="{{ paciente.nombre if paciente else '' }}"></label>
     <label>DNI <input name="dni" required value="{{ paciente.dni if paciente else '' }}"></label>
     <label>Celular <input name="celular" required value="{{ paciente.celular if paciente else '' }}"></label>
-    <label>Asistencia <input name="asistencia" type="checkbox" {% if paciente and paciente.asistencia %}checked{% endif %}></label>
+    <label>Fecha de nacimiento <input name="fecha_nacimiento" type="date" value="{{ paciente.fecha_nacimiento if paciente and paciente.fecha_nacimiento else '' }}"></label>
+    <label>Contacto familiar <input name="contacto_familiar" value="{{ paciente.contacto_familiar if paciente else '' }}"></label>
+    <label>Diagnostico <textarea name="diagnostico">{{ paciente.diagnostico if paciente else '' }}</textarea></label>
+    <label>Observaciones <textarea name="observaciones">{{ paciente.observaciones if paciente else '' }}</textarea></label>
+    <label>Paciente activo <input name="activo" type="checkbox" {% if not paciente or paciente.activo %}checked{% endif %}></label>
     <button type="submit">Guardar</button>
   </form>
   <p><a href="{{ url_for('pacientes.pacientes_list_page') }}">Volver</a></p>
