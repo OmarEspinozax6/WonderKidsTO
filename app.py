@@ -3,10 +3,11 @@ from flask import Flask
 from supabase import create_client, Client
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
 
-url = "https://znxhmovobemhpebzzkrp.supabase.co"
+url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
+supabase: Client | None = create_client(url, key) if url and key else None
 
 # Ruta principal
 @app.route("/")
@@ -42,3 +43,8 @@ def registrar():
 # Ejecutar la aplicación
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+from routes.pacientes_routes import pacientes_bp
+
+app.register_blueprint(pacientes_bp)

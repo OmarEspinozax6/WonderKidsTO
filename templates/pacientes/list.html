@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Pacientes</title></head>
+<body>
+  <h1>Pacientes</h1>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}<p class="{{ category }}">{{ message }}</p>{% endfor %}
+  {% endwith %}
+  <p><a href="{{ url_for('pacientes.paciente_new_page') }}">Nuevo paciente</a></p>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <table><thead><tr><th>Nombre</th><th>DNI</th><th>Celular</th><th>Asistencia</th><th>Acciones</th></tr></thead>
+    <tbody id="pacientes-body">
+    {% for paciente in pacientes %}<tr data-id="{{ paciente.id }}"><td>{{ paciente.nombre }}</td><td>{{ paciente.dni }}</td><td>{{ paciente.celular }}</td><td>{{ 'Si' if paciente.asistencia else 'No' }}</td><td><a href="{{ url_for('pacientes.paciente_edit_page', id=paciente.id) }}">Editar</a> <button type="button" data-delete-id="{{ paciente.id }}">Eliminar</button></td></tr>
+    {% else %}<tr><td colspan="5">No hay pacientes.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  <script src="{{ url_for('static', filename='js/pacientes.js') }}"></script>
+</body>
+</html>
