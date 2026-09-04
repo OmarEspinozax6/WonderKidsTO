@@ -1,7 +1,11 @@
 <!doctype html>
 <html lang="es">
-<head><meta charset="utf-8"><title>{{ 'Editar' if paciente else 'Nuevo' }} paciente</title></head>
+<head><meta charset="utf-8"><title>Centro de Terapias | {{ 'Editar' if paciente else 'Nuevo' }} paciente</title></head>
 <body>
+  <nav>
+    <a href="{{ url_for('pacientes.pacientes_list_page') }}">Pacientes</a>
+    <a href="{{ url_for('pacientes.paciente_new_page') }}">Registrar paciente</a>
+  </nav>
   <h1>{{ 'Editar' if paciente else 'Nuevo' }} paciente</h1>
   <form id="paciente-form" data-id="{{ paciente.id if paciente else '' }}">
     <label>Nombre <input name="nombre" required value="{{ paciente.nombre if paciente else '' }}"></label>

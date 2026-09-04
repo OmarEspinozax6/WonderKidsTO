@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, redirect, url_for
 from supabase import create_client, Client
 
 app = Flask(__name__)
@@ -22,31 +22,10 @@ def supabase_unavailable():
     """Return the standard response when Supabase is not configured."""
     return jsonify({"ok": False, "data": None, "error": "Supabase no esta configurado."}), 503
 
-# Ruta principal
 @app.route("/")
 def inicio():
-    if not supabase:
-        return supabase_unavailable()
-    try:
-        pacientes = supabase.table("pacientes").select("nombre, celular").limit(1).execute()
-        paciente = pacientes.data[0] if pacientes.data else {"nombre": "Sin datos", "celular": "N/A"}
-    except Exception:
-        app.logger.exception("Error consultando pacientes en la ruta principal.")
-        return jsonify({"ok": False, "data": None, "error": "Error interno consultando pacientes."}), 500
-
-    return f"""
-    <html>
-        <head>
-            <title>Centro de Terapias</title>
-        </head>
-        <body>
-            <h1>Centro de Terapias</h1>
-            <h2>Paciente registrado</h2>
-            <p>Nombre: {paciente['nombre']}</p>
-            <p>Celular: {paciente['celular']}</p>
-        </body>
-    </html>
-    """
+    """Abrir la pantalla principal del CRUD de pacientes."""
+    return redirect(url_for("pacientes.pacientes_list_page"))
 
 # Ruta para insertar un paciente
 @app.route("/registrar")
