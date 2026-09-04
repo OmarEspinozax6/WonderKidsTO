@@ -1,17 +1,11 @@
-<!doctype html>
-<html lang="es">
-<head><meta charset="utf-8"><title>Centro de Terapias | Pacientes</title></head>
-<body>
-  <nav>
-    <a href="{{ url_for('pacientes.pacientes_list_page') }}">Pacientes</a>
-    <a href="{{ url_for('pacientes.paciente_new_page') }}">Registrar paciente</a>
-  </nav>
-  <h1>Centro de Terapias</h1>
+{% extends "base.html" %}
+{% block title %}Pacientes | WonderKids{% endblock %}
+{% block content %}
+  <div class="page-heading"><div><p class="eyebrow">Historias clinicas</p><h1>Pacientes</h1><p class="muted">Consulta y administra las historias del centro.</p></div><a class="button primary" href="{{ url_for('pacientes.paciente_new_page') }}">+ Nuevo paciente</a></div>
   <h2>Pacientes</h2>
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}<p class="{{ category }}">{{ message }}</p>{% endfor %}
   {% endwith %}
-  <p><a href="{{ url_for('pacientes.paciente_new_page') }}">Nuevo paciente</a></p>
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   <table><thead><tr><th>Nombre</th><th>DNI</th><th>Celular</th><th>Asistencia</th><th>Acciones</th></tr></thead>
     <tbody id="pacientes-body">
@@ -20,5 +14,4 @@
     </tbody>
   </table>
   <script src="{{ url_for('static', filename='js/pacientes.js') }}"></script>
-</body>
-</html>
+{% endblock %}

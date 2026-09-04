@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from app import supabase
+import extensions
 
 
 REQUIRED_FIELDS = ("nombre", "dni", "celular", "asistencia")
@@ -30,10 +30,10 @@ def _result(data: Any = None, error: str | None = None) -> dict:
 
 def list_pacientes(limit: int | None = None, offset: int = 0) -> dict:
     """List patients, optionally applying a limit and offset."""
-    if supabase is None:
+    if extensions.supabase is None:
         return _result(error="Supabase no esta configurado.")
     try:
-        query = supabase.table("pacientes").select("*")
+        query = extensions.supabase.table("pacientes").select("*")
         if offset:
             query = query.range(offset, offset + (limit or 1000) - 1)
         elif limit is not None:
@@ -46,10 +46,10 @@ def list_pacientes(limit: int | None = None, offset: int = 0) -> dict:
 
 def get_paciente(id: str) -> dict:
     """Get one patient by its identifier."""
-    if supabase is None:
+    if extensions.supabase is None:
         return _result(error="Supabase no esta configurado.")
     try:
-        response = supabase.table("pacientes").select("*").eq("id", id).limit(1).execute()
+        response = extensions.supabase.table("pacientes").select("*").eq("id", id).limit(1).execute()
         data = response.data or []
         return _result(data=data[0] if data else None, error=None if data else "Paciente no encontrado.")
     except Exception as exc:
@@ -61,10 +61,10 @@ def create_paciente(data: dict) -> dict:
     validation_error = _validate_data(data)
     if validation_error:
         return _result(error=validation_error)
-    if supabase is None:
+    if extensions.supabase is None:
         return _result(error="Supabase no esta configurado.")
     try:
-        response = supabase.table("pacientes").insert(data).execute()
+        response = extensions.supabase.table("pacientes").insert(data).execute()
         return _result(data=(response.data or [None])[0])
     except Exception as exc:
         return _result(error=str(exc))
@@ -75,10 +75,10 @@ def update_paciente(id: str, data: dict) -> dict:
     validation_error = _validate_data(data)
     if validation_error:
         return _result(error=validation_error)
-    if supabase is None:
+    if extensions.supabase is None:
         return _result(error="Supabase no esta configurado.")
     try:
-        response = supabase.table("pacientes").update(data).eq("id", id).execute()
+        response = extensions.supabase.table("pacientes").update(data).eq("id", id).execute()
         return _result(data=(response.data or [None])[0], error=None if response.data else "Paciente no encontrado.")
     except Exception as exc:
         return _result(error=str(exc))
@@ -86,10 +86,10 @@ def update_paciente(id: str, data: dict) -> dict:
 
 def delete_paciente(id: str) -> dict:
     """Delete a patient by its identifier."""
-    if supabase is None:
+    if extensions.supabase is None:
         return _result(error="Supabase no esta configurado.")
     try:
-        response = supabase.table("pacientes").delete().eq("id", id).execute()
+        response = extensions.supabase.table("pacientes").delete().eq("id", id).execute()
         return _result(data=(response.data or [None])[0], error=None if response.data else "Paciente no encontrado.")
     except Exception as exc:
         return _result(error=str(exc))

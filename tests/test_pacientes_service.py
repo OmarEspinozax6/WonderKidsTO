@@ -2,6 +2,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+import extensions
 from services import pacientes_service
 
 
@@ -9,7 +10,7 @@ class PacientesServiceTest(unittest.TestCase):
     def setUp(self):
         self.supabase = MagicMock()
 
-    @patch.object(pacientes_service, "supabase")
+    @patch.object(extensions, "supabase")
     def test_create_paciente(self, mocked_supabase):
         data = {"nombre": "Ana", "dni": "1", "celular": "999", "asistencia": True}
         mocked_supabase.table.return_value.insert.return_value.execute.return_value = SimpleNamespace(data=[data])
@@ -20,7 +21,7 @@ class PacientesServiceTest(unittest.TestCase):
         self.assertEqual(result["data"], data)
         mocked_supabase.table.assert_called_once_with("pacientes")
 
-    @patch.object(pacientes_service, "supabase")
+    @patch.object(extensions, "supabase")
     def test_list_pacientes_with_limit_and_offset(self, mocked_supabase):
         query = mocked_supabase.table.return_value.select.return_value
         query.range.return_value.execute.return_value = SimpleNamespace(data=[{"id": 1}])

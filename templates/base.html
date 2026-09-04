@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Centro de Terapias{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="{{ url_for('dashboard.dashboard_page') }}"><span class="brand-mark">W</span><span>WonderKids <small>Centro de Terapias</small></span></a>
+      <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">Menu</button>
+    </header>
+    <aside class="sidebar" id="sidebar">
+      <nav class="main-nav" aria-label="Navegacion principal">
+        <a href="{{ url_for('dashboard.dashboard_page') }}">Resumen</a>
+        <a href="{{ url_for('pacientes.pacientes_list_page') }}">Pacientes</a>
+        <a href="#">Terapeutas</a>
+        <a href="#">Agenda</a>
+        <a href="#">Asistencias</a>
+        <a href="#">Documentos</a>
+      </nav>
+    </aside>
+    <main class="content">{% block content %}{% endblock %}</main>
+  </div>
+  <script>
+    const toggle = document.querySelector('.menu-toggle');
+    const sidebar = document.querySelector('#sidebar');
+    toggle?.addEventListener('click', () => {
+      const open = sidebar.classList.toggle('is-open');
+      toggle.setAttribute('aria-expanded', open);
+    });
+  </script>
+</body>
+</html>

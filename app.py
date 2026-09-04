@@ -2,6 +2,8 @@ import os
 from flask import Flask, jsonify, redirect, url_for
 from supabase import create_client, Client
 
+import extensions
+
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
 
@@ -14,6 +16,7 @@ if not url or not key:
 else:
     try:
         supabase = create_client(url, key)
+        extensions.supabase = supabase
     except Exception:
         app.logger.exception("No se pudo crear el cliente de Supabase.")
 
@@ -24,8 +27,8 @@ def supabase_unavailable():
 
 @app.route("/")
 def inicio():
-    """Abrir la pantalla principal del CRUD de pacientes."""
-    return redirect(url_for("pacientes.pacientes_list_page"))
+    """Abrir el dashboard del centro de terapias."""
+    return redirect(url_for("dashboard.dashboard_page"))
 
 # Ruta para insertar un paciente
 @app.route("/registrar")
@@ -52,6 +55,13 @@ except ImportError:
     app.logger.exception("No se pudo importar el blueprint de pacientes.")
 else:
     app.register_blueprint(pacientes_bp)
+
+try:
+    from routes.dashboard_routes import dashboard_bp
+except ImportError:
+    app.logger.exception("No se pudo importar el blueprint del dashboard.")
+else:
+    app.register_blueprint(dashboard_bp)
 
 # Ejecutar la aplicación
 if __name__ == "__main__":
