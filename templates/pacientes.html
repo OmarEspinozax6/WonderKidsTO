@@ -1,0 +1,12 @@
+﻿<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Pacientes</title></head>
+  <body>
+    <h1>Pacientes</h1>
+    {% if pacientes %}
+      <ul>{% for p in pacientes %}<li>{{ p }}</li>{% endfor %}</ul>
+    {% else %}
+      <p>No hay pacientes</p>
+    {% endif %}
+  </body>
+</html>
