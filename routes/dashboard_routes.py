@@ -12,10 +12,11 @@ dashboard_bp = Blueprint("dashboard", __name__)
 
 def _agenda_query(start_date: str, end_date: str, filters: dict):
     query = extensions.supabase.table("v_agenda_pacientes").select("*").gte("fecha", start_date).lte("fecha", end_date)
-    for key in ("terapeuta", "paciente", "padre", "especialidad"):
+    view_filter_names = {"terapeuta": "terapeuta", "paciente": "paciente", "padre": "padre_nombre", "especialidad": "especialidad"}
+    for key, column in view_filter_names.items():
         if filters.get(key):
-            query = query.ilike(key, f"%{filters[key]}%")
-    return query.order("fecha").order("hora_inicio")
+            query = query.ilike(column, f"%{filters[key]}%")
+    return query.order("fecha").order("hora_inicio").limit(1000)
 
 
 @dashboard_bp.get("/dashboard")

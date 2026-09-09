@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const calendar = new FullCalendar.Calendar(document.querySelector("#calendar"), {
     locale: "es", initialView: "timeGridDay", initialDate: document.querySelector("#calendar").dataset.initialDate, firstDay: 1,
-    height: "auto", nowIndicator: true, allDaySlot: false, slotMinTime: "07:00:00", slotMaxTime: "21:00:00",
+    height: "auto", nowIndicator: true, allDaySlot: false, slotEventOverlap: false, eventMaxStack: 8, slotMinTime: "07:00:00", slotMaxTime: "21:00:00",
     eventTimeFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
     headerToolbar: { left: "prev,next today", center: "title", right: "" },
     events: async (info, success, failure) => {
@@ -41,7 +41,13 @@ document.addEventListener("DOMContentLoaded", () => {
         success((result.data || []).map((item) => ({ id: item.id, title: item.paciente || "Sesión grupal", start: `${item.fecha}T${item.hora_inicio}`, end: `${item.fecha}T${item.hora_fin}`, extendedProps: item })));
       } catch (error) { failure(error); }
     },
-    eventContent: (info) => ({ html: `<span class="calendar-event-time">${info.timeText}</span>` }),
+    eventContent: (info) => {
+      const item = info.event.extendedProps;
+      const patient = item.paciente || "Sesión grupal";
+      const therapist = item.terapeuta || "Equipo WonderKids";
+      const specialty = item.especialidad || "Terapia";
+      return { html: `<div class="calendar-event-body"><strong>${info.timeText}</strong><span>${patient}</span><small>${therapist} · ${specialty}</small></div>` };
+    },
     eventClick: (info) => {
       selectedSession = info.event.extendedProps;
       inspector.hidden = false;
@@ -58,6 +64,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("input[name=fecha]")?.addEventListener("change", (event) => calendar.gotoDate(event.target.value));
   filterForm.querySelectorAll("input[name=padre], input[name=especialidad], select").forEach((input) => input.addEventListener("input", () => calendar.refetchEvents()));
   document.querySelectorAll("[data-inspector-action]").forEach((button) => button.addEventListener("click", () => openDialog(button.dataset.inspectorAction)));
+  document.querySelector("#inspector-close")?.addEventListener("click", () => {
+    inspector.hidden = true;
+    selectedSession = null;
+    calendar.unselect();
+  });
 
   dialogForm.addEventListener("submit", async (event) => {
     if (event.submitter?.value !== "save") return;
@@ -68,4 +79,5 @@ document.addEventListener("DOMContentLoaded", () => {
     if (response.ok) { dialog.close(); calendar.refetchEvents(); inspector.hidden = true; }
     else alert((await response.json()).error || "No se pudo actualizar la sesión.");
   });
+  dialogForm.addEventListener("close", () => { actionMode = "details"; });
 });
