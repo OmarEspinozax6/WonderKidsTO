@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const inspectorContent = document.querySelector("#inspector-content");
   const dialog = document.querySelector("#session-dialog");
   const dialogForm = document.querySelector("#session-form");
+  const resultsList = document.querySelector("#agenda-results-list");
+  const resultsCount = document.querySelector("#agenda-results-count");
   let selectedSession = null;
   let actionMode = "details";
 
@@ -27,9 +29,22 @@ document.addEventListener("DOMContentLoaded", () => {
     dialog.showModal();
   };
 
+  const renderResults = (items) => {
+    resultsCount.textContent = `${items.length} ${items.length === 1 ? "sesión" : "sesiones"}`;
+    if (!items.length) {
+      resultsList.innerHTML = '<div class="agenda-results-empty">No hay sesiones en este periodo.</div>';
+      return;
+    }
+    resultsList.innerHTML = items.map((item) => `<button type="button" class="agenda-result-row" data-result-id="${item.id}"><time><strong>${item.fecha}</strong><span>${item.hora_inicio.slice(0, 5)} - ${item.hora_fin.slice(0, 5)}</span></time><span class="agenda-result-main"><strong>${item.paciente || "Sesión grupal"}</strong><span>${item.terapeuta || "Equipo WonderKids"} · ${item.especialidad || "Terapia"}</span></span><span class="status ${item.estado}">${item.estado}</span><span class="payment ${item.estado_pago}">${item.estado_pago}</span></button>`).join("");
+    resultsList.querySelectorAll("[data-result-id]").forEach((row) => row.addEventListener("click", () => {
+      const event = calendar.getEventById(row.dataset.resultId);
+      if (event) { selectedSession = event.extendedProps; inspector.hidden = false; inspectorTitle.textContent = selectedSession.paciente || "Sesión grupal"; inspectorContent.textContent = `${selectedSession.fecha} · ${selectedSession.hora_inicio.slice(0, 5)}-${selectedSession.hora_fin.slice(0, 5)}\n${selectedSession.terapeuta || "Equipo WonderKids"} · ${selectedSession.especialidad || "Terapia"}\n${selectedSession.padre_nombre || "Familiar no registrado"} · Pago ${selectedSession.estado_pago}`; }
+    }));
+  };
+
   const calendar = new FullCalendar.Calendar(document.querySelector("#calendar"), {
     locale: "es", initialView: "timeGridDay", initialDate: document.querySelector("#calendar").dataset.initialDate, firstDay: 1,
-    height: "auto", nowIndicator: true, allDaySlot: false, slotEventOverlap: false, eventMaxStack: 8, slotMinTime: "07:00:00", slotMaxTime: "21:00:00",
+    height: "auto", nowIndicator: true, allDaySlot: false, slotEventOverlap: false, eventMaxStack: 20, slotMinTime: "00:00:00", slotMaxTime: "24:00:00",
     eventTimeFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
     headerToolbar: { left: "prev,next today", center: "title", right: "" },
     events: async (info, success, failure) => {
@@ -38,7 +53,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const response = await fetch(`/api/agenda?${params}`);
         const result = await response.json();
         if (!response.ok) throw new Error(result.error);
-        success((result.data || []).map((item) => ({ id: item.id, title: item.paciente || "Sesión grupal", start: `${item.fecha}T${item.hora_inicio}`, end: `${item.fecha}T${item.hora_fin}`, extendedProps: item })));
+        const items = result.data || [];
+        renderResults(items);
+        success(items.map((item) => ({ id: String(item.id), title: item.paciente || "Sesión grupal", start: `${item.fecha}T${item.hora_inicio}`, end: `${item.fecha}T${item.hora_fin}`, extendedProps: item })));
       } catch (error) { failure(error); }
     },
     eventContent: (info) => {
