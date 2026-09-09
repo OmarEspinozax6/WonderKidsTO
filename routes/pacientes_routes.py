@@ -3,6 +3,7 @@
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 
 from services import pacientes_service
+import extensions
 
 
 pacientes_bp = Blueprint("pacientes", __name__)
@@ -65,13 +66,24 @@ def api_delete_paciente(id):
 def pacientes_list_page():
     """Render the patient list page."""
     result = pacientes_service.list_pacientes()
-    return render_template("pacientes/list.html", pacientes=result["data"] or [], error=result["error"])
+    pacientes = result["data"] or []
+    if result["ok"] and extensions.supabase is not None:
+        tutores = extensions.supabase.table("tutores").select("id,nombre,telefono").execute().data or []
+        tutores_by_id = {tutor["id"]: tutor for tutor in tutores}
+        for paciente in pacientes:
+            tutor = tutores_by_id.get(paciente.get("tutor_id"), {})
+            paciente["tutor_nombre"] = tutor.get("nombre")
+            paciente["tutor_telefono"] = tutor.get("telefono")
+    return render_template("pacientes/list.html", pacientes=pacientes, error=result["error"])
 
 
 @pacientes_bp.get("/pacientes/nuevo")
 def paciente_new_page():
     """Render the create form."""
-    return render_template("pacientes/form.html", paciente=None)
+    tutores = []
+    if extensions.supabase is not None:
+        tutores = extensions.supabase.table("tutores").select("id,nombre,telefono").order("nombre").execute().data or []
+    return render_template("pacientes/form.html", paciente=None, tutores=tutores)
 
 
 @pacientes_bp.get("/pacientes/<id>/editar")
@@ -81,4 +93,7 @@ def paciente_edit_page(id):
     if not result["ok"]:
         flash(result["error"], "error")
         return redirect(url_for("pacientes.pacientes_list_page"))
-    return render_template("pacientes/form.html", paciente=result["data"])
+    tutores = []
+    if extensions.supabase is not None:
+        tutores = extensions.supabase.table("tutores").select("id,nombre,telefono").order("nombre").execute().data or []
+    return render_template("pacientes/form.html", paciente=result["data"], tutores=tutores)

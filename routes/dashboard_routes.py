@@ -1,6 +1,6 @@
 """Dashboard routes for the therapy center."""
 
-from datetime import date
+from datetime import date, timedelta
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 
@@ -20,6 +20,7 @@ def dashboard_page():
     error = None
     selected = {
         "fecha": request.args.get("fecha", date.today().isoformat()),
+        "vista": request.args.get("vista", "dia"),
         "terapeuta": request.args.get("terapeuta", ""),
         "paciente": request.args.get("paciente", ""),
         "padre": request.args.get("padre", ""),
@@ -31,7 +32,17 @@ def dashboard_page():
         try:
             summary_response = extensions.supabase.table("v_resumen_dashboard").select("*").limit(1).execute()
             summary = (summary_response.data or [{}])[0]
-            agenda_query = extensions.supabase.table("v_agenda_pacientes").select("*").eq("fecha", selected["fecha"])
+            selected_date = date.fromisoformat(selected["fecha"])
+            if selected["vista"] == "semana":
+                start_date = selected_date - timedelta(days=selected_date.weekday())
+                end_date = start_date + timedelta(days=6)
+            elif selected["vista"] == "mes":
+                start_date = selected_date.replace(day=1)
+                next_month = start_date.replace(day=28) + timedelta(days=4)
+                end_date = next_month.replace(day=1) - timedelta(days=1)
+            else:
+                start_date = end_date = selected_date
+            agenda_query = extensions.supabase.table("v_agenda_pacientes").select("*").gte("fecha", start_date.isoformat()).lte("fecha", end_date.isoformat())
             for key in ("terapeuta", "paciente", "padre", "especialidad"):
                 if selected[key]:
                     agenda_query = agenda_query.ilike(key, f"%{selected[key]}%")

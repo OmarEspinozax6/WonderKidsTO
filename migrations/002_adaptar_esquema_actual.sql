@@ -48,8 +48,10 @@ select
      and (inicio_real_ts at time zone 'America/Lima')::date = (now() at time zone 'America/Lima')::date) as asistencias_hoy;
 
 grant usage on schema public to anon, authenticated;
-grant select on public.v_agenda_pacientes, public.v_resumen_dashboard to anon, authenticated;
+grant usage on schema public to service_role;
+grant select on public.v_agenda_pacientes, public.v_resumen_dashboard to anon, authenticated, service_role;
 grant select on public.pacientes, public.tutores, public.trabajadores, public.eventos,
   public.eventos_pacientes, public.facturas, public.registros_sesion_participante
-to anon, authenticated;
-grant insert, update, delete on public.pacientes, public.eventos to anon, authenticated;
+to anon, authenticated, service_role;
+grant insert, update, delete on public.pacientes, public.eventos
+to anon, authenticated, service_role;

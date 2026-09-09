@@ -1,6 +1,14 @@
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("#paciente-form");
   const list = document.querySelector("#pacientes-body");
+  const patientFilter = document.querySelector("#patient-filter");
+
+  patientFilter?.addEventListener("input", () => {
+    const query = patientFilter.value.trim().toLowerCase();
+    list?.querySelectorAll("tr[data-search]").forEach((row) => {
+      row.hidden = !row.dataset.search.toLowerCase().includes(query);
+    });
+  });
 
   if (form) {
     form.addEventListener("submit", async (event) => {

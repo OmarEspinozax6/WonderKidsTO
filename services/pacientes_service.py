@@ -5,10 +5,9 @@ from typing import Any
 import extensions
 
 
-REQUIRED_FIELDS = ("nombre", "dni", "celular")
+REQUIRED_FIELDS = ("nombre", "apellido")
 PATIENT_FIELDS = {
-    "nombre", "dni", "celular", "fecha_nacimiento", "contacto_familiar",
-    "diagnostico", "observaciones", "activo",
+    "nombre", "apellido", "fecha_nacimiento", "tutor_id", "activo",
 }
 
 
@@ -17,9 +16,13 @@ def _validate_data(data: Any) -> str | None:
     if not isinstance(data, dict):
         return "El cuerpo debe ser un objeto JSON."
     for field in REQUIRED_FIELDS:
+        if field not in data and field == "apellido" and "dni" in data:
+            continue
         if field not in data:
-            return f"El campo '{field}' es obligatorio."
-    for field in ("nombre", "dni", "celular"):
+            return "El campo 'dni' es obligatorio." if field == "apellido" else f"El campo '{field}' es obligatorio."
+    for field in ("nombre", "apellido", "dni", "celular"):
+        if field not in data:
+            continue
         if not isinstance(data[field], str) or not data[field].strip():
             return f"El campo '{field}' debe ser un string no vacio."
     if "activo" in data and not isinstance(data["activo"], bool):

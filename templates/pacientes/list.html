@@ -6,9 +6,10 @@
     {% for category, message in messages %}<p class="{{ category }}">{{ message }}</p>{% endfor %}
   {% endwith %}
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
-  <table><thead><tr><th>Nombre</th><th>DNI</th><th>Celular</th><th>Estado</th><th>Acciones</th></tr></thead>
+  <div class="patient-toolbar"><input id="patient-filter" type="search" placeholder="Filtrar por nombre, apellido o tutor" aria-label="Filtrar pacientes"></div>
+  <table><thead><tr><th>Paciente</th><th>Fecha de nacimiento</th><th>Tutor</th><th>Estado</th><th>Acciones</th></tr></thead>
     <tbody id="pacientes-body">
-    {% for paciente in pacientes %}<tr data-id="{{ paciente.id }}"><td>{{ paciente.nombre }}</td><td>{{ paciente.dni }}</td><td>{{ paciente.celular }}</td><td>{{ 'Activo' if paciente.activo else 'Inactivo' }}</td><td><a href="{{ url_for('pacientes.paciente_edit_page', id=paciente.id) }}">Editar</a> <button type="button" data-delete-id="{{ paciente.id }}">Eliminar</button></td></tr>
+    {% for paciente in pacientes %}<tr data-id="{{ paciente.id }}" data-search="{{ paciente.nombre }} {{ paciente.apellido }} {{ paciente.tutor_nombre }}"><td><strong>{{ paciente.nombre }} {{ paciente.apellido or '' }}</strong></td><td>{{ paciente.fecha_nacimiento or 'Sin fecha' }}</td><td>{{ paciente.tutor_nombre or 'Sin tutor' }}</td><td>{{ 'Activo' if paciente.activo else 'Inactivo' }}</td><td><a href="{{ url_for('pacientes.paciente_edit_page', id=paciente.id) }}">Editar</a> <button type="button" data-delete-id="{{ paciente.id }}">Eliminar</button></td></tr>
     {% else %}<tr><td colspan="5">No hay pacientes.</td></tr>{% endfor %}
     </tbody>
   </table>

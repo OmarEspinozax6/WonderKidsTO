@@ -4,12 +4,9 @@
   <h1>{{ 'Editar' if paciente else 'Nuevo' }} paciente</h1>
   <form id="paciente-form" data-id="{{ paciente.id if paciente else '' }}">
     <label>Nombre <input name="nombre" required value="{{ paciente.nombre if paciente else '' }}"></label>
-    <label>DNI <input name="dni" required value="{{ paciente.dni if paciente else '' }}"></label>
-    <label>Celular <input name="celular" required value="{{ paciente.celular if paciente else '' }}"></label>
+    <label>Apellido <input name="apellido" required value="{{ paciente.apellido if paciente else '' }}"></label>
     <label>Fecha de nacimiento <input name="fecha_nacimiento" type="date" value="{{ paciente.fecha_nacimiento if paciente and paciente.fecha_nacimiento else '' }}"></label>
-    <label>Contacto familiar <input name="contacto_familiar" value="{{ paciente.contacto_familiar if paciente else '' }}"></label>
-    <label>Diagnostico <textarea name="diagnostico">{{ paciente.diagnostico if paciente else '' }}</textarea></label>
-    <label>Observaciones <textarea name="observaciones">{{ paciente.observaciones if paciente else '' }}</textarea></label>
+    <label>Tutor <select name="tutor_id"><option value="">Sin tutor</option>{% for tutor in tutores %}<option value="{{ tutor.id }}" {% if paciente and paciente.tutor_id == tutor.id %}selected{% endif %}>{{ tutor.nombre }}{% if tutor.telefono %} · {{ tutor.telefono }}{% endif %}</option>{% endfor %}</select></label>
     <label>Paciente activo <input name="activo" type="checkbox" {% if not paciente or paciente.activo %}checked{% endif %}></label>
     <button type="submit">Guardar</button>
   </form>
