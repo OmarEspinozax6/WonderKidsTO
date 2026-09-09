@@ -1,8 +1,12 @@
 import os
+from pathlib import Path
 from flask import Flask, jsonify, redirect, url_for
+from dotenv import load_dotenv
 from supabase import create_client, Client
 
 import extensions
+
+load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
@@ -17,6 +21,7 @@ else:
     try:
         supabase = create_client(url, key)
         extensions.supabase = supabase
+        app.logger.info("Cliente Supabase configurado para %s", url)
     except Exception:
         app.logger.exception("No se pudo crear el cliente de Supabase.")
 
@@ -24,6 +29,19 @@ else:
 def supabase_unavailable():
     """Return the standard response when Supabase is not configured."""
     return jsonify({"ok": False, "data": None, "error": "Supabase no esta configurado."}), 503
+
+
+@app.get("/api/diagnostico-supabase")
+def diagnostico_supabase():
+    """Check configuration and the dashboard view without exposing credentials."""
+    if supabase is None:
+        return jsonify({"ok": False, "configured": False, "error": "SUPABASE_URL o SUPABASE_KEY no estan configuradas."}), 503
+    try:
+        response = supabase.table("v_resumen_dashboard").select("*").limit(1).execute()
+        return jsonify({"ok": True, "configured": True, "url": url, "data": response.data or []})
+    except Exception as exc:
+        app.logger.exception("Diagnostico Supabase fallido: %s", exc)
+        return jsonify({"ok": False, "configured": True, "url": url, "error": str(exc)}), 502
 
 @app.route("/")
 def inicio():

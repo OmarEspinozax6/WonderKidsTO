@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, current_app, jsonify, render_template, request
 
 import extensions
 
@@ -37,9 +37,18 @@ def dashboard_page():
                     agenda_query = agenda_query.ilike(key, f"%{selected[key]}%")
             agenda_response = agenda_query.order("hora_inicio").execute()
             agenda = agenda_response.data or []
-            terapeutas = extensions.supabase.table("terapeutas").select("id,nombre,especialidad").eq("activo", True).order("nombre").execute().data or []
-            pacientes = extensions.supabase.table("pacientes").select("id,nombre,padre_nombre").eq("activo", True).order("nombre").execute().data or []
-        except Exception:
+            terapeutas_data = extensions.supabase.table("trabajadores").select("id,nombre,apellido").eq("activo", True).order("nombre").execute().data or []
+            terapeutas = [
+                {"id": item["id"], "nombre": f'{item.get("nombre", "")} {item.get("apellido", "")}'.strip(), "especialidad": "Terapia"}
+                for item in terapeutas_data
+            ]
+            pacientes_data = extensions.supabase.table("pacientes").select("id,nombre,apellido,tutor_id").eq("activo", True).order("nombre").execute().data or []
+            pacientes = [
+                {"id": item["id"], "nombre": f'{item.get("nombre", "")} {item.get("apellido", "")}'.strip()}
+                for item in pacientes_data
+            ]
+        except Exception as exc:
+            current_app.logger.exception("Error cargando dashboard desde Supabase: %s", exc)
             error = "No se pudo cargar el resumen del dashboard."
     return render_template("dashboard.html", summary=summary, agenda=agenda, terapeutas=terapeutas, pacientes=pacientes, selected=selected, error=error)
 
@@ -50,12 +59,17 @@ def update_session(id):
     if extensions.supabase is None:
         return jsonify({"ok": False, "error": "Supabase no esta configurado."}), 503
     data = request.get_json(silent=True) or {}
-    allowed = {"fecha", "hora_inicio", "hora_fin", "estado", "estado_pago", "notas"}
+    allowed = {"fecha", "hora_inicio", "hora_fin", "estado"}
     changes = {key: value for key, value in data.items() if key in allowed}
     if not changes:
         return jsonify({"ok": False, "error": "No hay cambios validos."}), 400
     try:
-        response = extensions.supabase.table("sesiones").update(changes).eq("id", id).execute()
+        event_changes = {"estado": changes["estado"]} if "estado" in changes else {}
+        if "fecha" in changes and "hora_inicio" in changes:
+            event_changes["inicio_ts"] = f'{changes["fecha"]}T{changes["hora_inicio"]}:00-05:00'
+        if "fecha" in changes and "hora_fin" in changes:
+            event_changes["fin_ts"] = f'{changes["fecha"]}T{changes["hora_fin"]}:00-05:00'
+        response = extensions.supabase.table("eventos").update(event_changes).eq("id", id).execute()
         if not response.data:
             return jsonify({"ok": False, "error": "Sesion no encontrada."}), 404
         return jsonify({"ok": True, "data": response.data[0], "error": None})
