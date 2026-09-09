@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const calendar = new FullCalendar.Calendar(document.querySelector("#calendar"), {
     locale: "es", timeZone: "UTC", initialView: "timeGridDay", initialDate: document.querySelector("#calendar").dataset.initialDate, firstDay: 1,
-    height: "auto", nowIndicator: false, allDaySlot: false, slotEventOverlap: false, eventMaxStack: 20, slotMinTime: "06:00:00", slotMaxTime: "22:00:00", slotDuration: "00:30:00", slotLabelInterval: "01:00:00",
+    height: "auto", nowIndicator: false, allDaySlot: false, slotEventOverlap: false, eventMaxStack: 20, slotMinTime: "06:00:00", slotMaxTime: "22:00:00", slotDuration: "00:30:00", slotLabelInterval: "00:30:00",
     eventTimeFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
     headerToolbar: { left: "prev,next today", center: "title", right: "" },
     events: async (info, success, failure) => {
