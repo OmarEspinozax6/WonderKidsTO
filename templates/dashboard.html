@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Resumen | WonderKids{% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">Agenda clinica</p><h1>Resumen del centro</h1><p class="muted">Organiza las sesiones y encuentra cada historia en segundos.</p></div><a class="button primary" href="{{ url_for('pacientes.paciente_new_page') }}">+ Nuevo paciente</a></div>
+<div class="page-heading"><div><p class="eyebrow">Agenda clinica</p><h1>Resumen del centro</h1><p class="muted">Organiza las sesiones y encuentra cada historia en segundos.</p></div></div>
 {% if error %}<div class="notice error">{{ error }} Configura Supabase y ejecuta la migracion para activar los datos.</div>{% endif %}
 <section class="metric-grid" aria-label="Indicadores">
   <article class="metric"><span>Pacientes activos</span><strong>{{ summary.get('pacientes_activos', 0) }}</strong><small>Historias activas</small></article>
@@ -11,16 +11,18 @@
 </section>
 <section class="panel agenda-panel">
   <div class="panel-heading"><div><p class="eyebrow">Agenda visual</p><h2>Sesiones</h2></div><span class="agenda-count">{{ agenda|length }} sesiones</span></div>
-  <form class="filters" method="get" aria-label="Filtrar agenda" data-live-filter>
-    <fieldset class="view-switch"><legend>Vista</legend>{% for value, label in [('dia', 'Dia'), ('semana', 'Semana'), ('mes', 'Mes')] %}<label><input type="radio" name="vista" value="{{ value }}" {% if selected.vista == value %}checked{% endif %}>{{ label }}</label>{% endfor %}</fieldset>
+  <div class="filters" aria-label="Filtrar agenda" data-live-filter>
+    <fieldset class="view-switch"><legend>Vista</legend><div class="btn-group" role="group" aria-label="Vista del calendario"><button type="button" class="btn btn-outline-secondary" data-calendar-view="timeGridDay">Día</button><button type="button" class="btn btn-outline-secondary" data-calendar-view="timeGridWeek">Semana</button><button type="button" class="btn btn-outline-secondary" data-calendar-view="dayGridMonth">Mes</button></div></fieldset>
     <label>Fecha<input type="date" name="fecha" value="{{ selected.fecha }}"></label>
     <label>Terapeuta<select name="terapeuta"><option value="">Todos</option>{% for terapeuta in terapeutas %}<option value="{{ terapeuta.nombre }}" {% if selected.terapeuta == terapeuta.nombre %}selected{% endif %}>{{ terapeuta.nombre }}</option>{% endfor %}</select></label>
     <label>Paciente<select name="paciente"><option value="">Todos</option>{% for paciente in pacientes %}<option value="{{ paciente.nombre }}" {% if selected.paciente == paciente.nombre %}selected{% endif %}>{{ paciente.nombre }}</option>{% endfor %}</select></label>
     <label>Padre o madre<input name="padre" value="{{ selected.padre }}" placeholder="Buscar familiar"></label>
     <label>Especialidad<input name="especialidad" value="{{ selected.especialidad }}" placeholder="Ej. Psicologia"></label>
-  </form>
-  {% if agenda %}<div class="session-grid" id="session-grid">{% for item in agenda %}<article class="session-card" data-session='{{ item|tojson }}' data-search="{{ item.paciente }} {{ item.terapeuta }} {{ item.padre_nombre }} {{ item.especialidad }} {{ item.estado_pago }}"><div class="session-time"><time>{{ item.fecha }}<br>{{ item.hora_inicio[:5] }}</time><span>{{ item.hora_fin[:5] }}</span></div><div class="session-main"><div class="session-topline"><span class="session-kind">{{ item.tipo_sesion }}</span><span class="status {{ item.estado }}">{{ item.estado }}</span></div><h3>{{ item.paciente or 'Sesión grupal' }}</h3><p class="session-therapist">{{ item.terapeuta or 'Equipo WonderKids' }} <span>·</span> {{ item.especialidad }}</p><p class="session-family">{{ item.padre_nombre or 'Familiar no registrado' }}</p><div class="session-footer"><span class="payment {{ item.estado_pago }}">Pago: {{ item.estado_pago }}</span><div class="session-actions"><button type="button" data-action="details">Detalles</button><button type="button" data-action="reschedule">Reprogramar</button><button type="button" data-action="cancel">Cancelar</button></div></div></div></article>{% endfor %}</div><div class="empty-state" id="filtered-empty" hidden><strong>No hay coincidencias</strong><span>Prueba con otro nombre o filtro.</span></div>{% else %}<div class="empty-state"><strong>No hay sesiones para este periodo</strong><span>Las citas apareceran aqui cuando existan eventos en la agenda.</span></div>{% endif %}
+  </div>
+  <div class="calendar-layout"><div id="calendar" data-initial-date="{{ selected.fecha }}" aria-label="Calendario de sesiones"></div><aside class="session-inspector" id="session-inspector" hidden><p class="eyebrow">Sesión seleccionada</p><h3 id="inspector-title">Selecciona una sesión</h3><div id="inspector-content"></div><div class="inspector-actions"><button type="button" class="btn btn-primary" data-inspector-action="details">Detalles</button><button type="button" class="btn btn-outline-secondary" data-inspector-action="reschedule">Reprogramar</button><button type="button" class="btn btn-outline-danger" data-inspector-action="cancel">Cancelar</button></div></aside></div>
 </section>
 <dialog id="session-dialog"><form method="dialog" id="session-form"><button class="dialog-close" value="close" aria-label="Cerrar">×</button><p class="eyebrow">Gestion de sesion</p><h2 id="dialog-title">Detalle</h2><div id="dialog-content"></div><div class="dialog-fields"><label>Fecha<input type="date" name="fecha"></label><label>Inicio<input type="time" name="hora_inicio"></label><label>Fin<input type="time" name="hora_fin"></label></div><div class="dialog-actions"><button value="close" type="submit">Cerrar</button><button class="button primary" value="save" type="submit">Guardar cambios</button></div></form></dialog>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.18/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.18/index.global.min.js"></script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

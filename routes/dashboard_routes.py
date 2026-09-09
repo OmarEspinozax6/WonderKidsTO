@@ -10,6 +10,14 @@ import extensions
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
+def _agenda_query(start_date: str, end_date: str, filters: dict):
+    query = extensions.supabase.table("v_agenda_pacientes").select("*").gte("fecha", start_date).lte("fecha", end_date)
+    for key in ("terapeuta", "paciente", "padre", "especialidad"):
+        if filters.get(key):
+            query = query.ilike(key, f"%{filters[key]}%")
+    return query.order("fecha").order("hora_inicio")
+
+
 @dashboard_bp.get("/dashboard")
 def dashboard_page():
     """Render the visual agenda, keeping filters in the URL."""
@@ -42,11 +50,7 @@ def dashboard_page():
                 end_date = next_month.replace(day=1) - timedelta(days=1)
             else:
                 start_date = end_date = selected_date
-            agenda_query = extensions.supabase.table("v_agenda_pacientes").select("*").gte("fecha", start_date.isoformat()).lte("fecha", end_date.isoformat())
-            for key in ("terapeuta", "paciente", "padre", "especialidad"):
-                if selected[key]:
-                    agenda_query = agenda_query.ilike(key, f"%{selected[key]}%")
-            agenda_response = agenda_query.order("hora_inicio").execute()
+            agenda_response = _agenda_query(start_date.isoformat(), end_date.isoformat(), selected).execute()
             agenda = agenda_response.data or []
             terapeutas_data = extensions.supabase.table("trabajadores").select("id,nombre,apellido").eq("activo", True).order("nombre").execute().data or []
             terapeutas = [
@@ -62,6 +66,22 @@ def dashboard_page():
             current_app.logger.exception("Error cargando dashboard desde Supabase: %s", exc)
             error = "No se pudo cargar el resumen del dashboard."
     return render_template("dashboard.html", summary=summary, agenda=agenda, terapeutas=terapeutas, pacientes=pacientes, selected=selected, error=error)
+
+
+@dashboard_bp.get("/api/agenda")
+def agenda_data():
+    """Return sessions for FullCalendar without reloading the page."""
+    if extensions.supabase is None:
+        return jsonify({"ok": False, "data": [], "error": "Supabase no esta configurado."}), 503
+    try:
+        start = request.args.get("start", date.today().isoformat())[:10]
+        end = request.args.get("end", start)[:10]
+        filters = {key: request.args.get(key, "") for key in ("terapeuta", "paciente", "padre", "especialidad")}
+        response = _agenda_query(start, end, filters).execute()
+        return jsonify({"ok": True, "data": response.data or [], "error": None})
+    except Exception as exc:
+        current_app.logger.exception("Error cargando agenda: %s", exc)
+        return jsonify({"ok": False, "data": [], "error": "No se pudo cargar la agenda."}), 502
 
 
 @dashboard_bp.patch("/api/sesiones/<id>")
