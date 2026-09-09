@@ -35,16 +35,24 @@ document.addEventListener("DOMContentLoaded", () => {
       resultsList.innerHTML = '<div class="agenda-results-empty">No hay sesiones en este periodo.</div>';
       return;
     }
-    resultsList.innerHTML = items.map((item) => `<button type="button" class="agenda-result-row" data-result-id="${item.id}"><time><strong>${item.fecha}</strong><span>${item.hora_inicio.slice(0, 5)} - ${item.hora_fin.slice(0, 5)}</span></time><span class="agenda-result-main"><strong>${item.paciente || "Sesión grupal"}</strong><span>${item.terapeuta || "Equipo WonderKids"} · ${item.especialidad || "Terapia"}</span></span><span class="status ${item.estado}">${item.estado}</span><span class="payment ${item.estado_pago}">${item.estado_pago}</span></button>`).join("");
+    resultsList.innerHTML = `<div class="agenda-table-wrap"><table class="agenda-table"><thead><tr><th>Fecha</th><th>Horario</th><th>Paciente</th><th>Terapeuta</th><th>Especialidad</th><th>Estado</th><th>Pago</th><th>Asistencia</th></tr></thead><tbody>${items.map((item) => `<tr data-result-id="${item.id}"><td>${item.fecha}</td><td>${item.hora_inicio.slice(0, 5)} - ${item.hora_fin.slice(0, 5)}</td><td><strong>${item.paciente || "Sesión grupal"}</strong></td><td>${item.terapeuta || "Equipo WonderKids"}</td><td>${item.especialidad || "Terapia"}</td><td><span class="status ${item.estado}">${item.estado}</span></td><td><span class="payment ${item.estado_pago}">${item.estado_pago}</span></td><td><button type="button" class="attendance-button ${item.asistencia === "asistio" ? "is-done" : ""}" data-attendance-id="${item.id}">${item.asistencia === "asistio" ? "Asistió" : "Marcar"}</button></td></tr>`).join("")}</tbody></table></div>`;
     resultsList.querySelectorAll("[data-result-id]").forEach((row) => row.addEventListener("click", () => {
       const event = calendar.getEventById(row.dataset.resultId);
       if (event) { selectedSession = event.extendedProps; inspector.hidden = false; inspectorTitle.textContent = selectedSession.paciente || "Sesión grupal"; inspectorContent.textContent = `${selectedSession.fecha} · ${selectedSession.hora_inicio.slice(0, 5)}-${selectedSession.hora_fin.slice(0, 5)}\n${selectedSession.terapeuta || "Equipo WonderKids"} · ${selectedSession.especialidad || "Terapia"}\n${selectedSession.padre_nombre || "Familiar no registrado"} · Pago ${selectedSession.estado_pago}`; }
     }));
+    resultsList.querySelectorAll("[data-attendance-id]").forEach((button) => button.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      const item = items.find((session) => String(session.id) === button.dataset.attendanceId);
+      if (!item || !item.paciente_id) return;
+      const response = await fetch(`/api/agenda/${item.id}/asistencia`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paciente_id: item.paciente_id, asistencia: "asistio" }) });
+      if (response.ok) { item.asistencia = "asistio"; renderResults(items); }
+      else alert((await response.json()).error || "No se pudo guardar la asistencia.");
+    }));
   };
 
   const calendar = new FullCalendar.Calendar(document.querySelector("#calendar"), {
-    locale: "es", initialView: "timeGridDay", initialDate: document.querySelector("#calendar").dataset.initialDate, firstDay: 1,
-    height: "auto", nowIndicator: true, allDaySlot: false, slotEventOverlap: false, eventMaxStack: 20, slotMinTime: "00:00:00", slotMaxTime: "24:00:00",
+    locale: "es", timeZone: "America/Lima", initialView: "timeGridDay", initialDate: document.querySelector("#calendar").dataset.initialDate, firstDay: 1,
+    height: "auto", nowIndicator: true, allDaySlot: false, slotEventOverlap: false, eventMaxStack: 20, slotMinTime: "06:00:00", slotMaxTime: "22:00:00", slotDuration: "00:30:00", slotLabelInterval: "01:00:00",
     eventTimeFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
     headerToolbar: { left: "prev,next today", center: "title", right: "" },
     events: async (info, success, failure) => {
@@ -55,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!response.ok) throw new Error(result.error);
         const items = result.data || [];
         renderResults(items);
-        success(items.map((item) => ({ id: String(item.id), title: item.paciente || "Sesión grupal", start: `${item.fecha}T${item.hora_inicio}`, end: `${item.fecha}T${item.hora_fin}`, extendedProps: item })));
+        success(items.map((item) => ({ id: String(item.id), title: item.paciente || "Sesión grupal", start: `${item.fecha}T${item.hora_inicio}-05:00`, end: `${item.fecha}T${item.hora_fin}-05:00`, extendedProps: item })));
       } catch (error) { failure(error); }
     },
     eventContent: (info) => {
@@ -80,7 +88,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
   document.querySelector("input[name=fecha]")?.addEventListener("change", (event) => calendar.gotoDate(event.target.value));
   filterForm.querySelectorAll("input[name=padre], input[name=especialidad], select").forEach((input) => input.addEventListener("input", () => calendar.refetchEvents()));
-  document.querySelectorAll("[data-inspector-action]").forEach((button) => button.addEventListener("click", () => openDialog(button.dataset.inspectorAction)));
+  document.querySelectorAll("[data-inspector-action]").forEach((button) => button.addEventListener("click", async () => {
+    if (button.dataset.inspectorAction !== "attendance") { openDialog(button.dataset.inspectorAction); return; }
+    if (!selectedSession?.paciente_id) return;
+    const response = await fetch(`/api/agenda/${selectedSession.id}/asistencia`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paciente_id: selectedSession.paciente_id, asistencia: "asistio" }) });
+    if (response.ok) { selectedSession.asistencia = "asistio"; inspectorContent.textContent += "\nAsistencia: asistió"; calendar.refetchEvents(); }
+    else alert((await response.json()).error || "No se pudo guardar la asistencia.");
+  }));
   document.querySelector("#inspector-close")?.addEventListener("click", () => {
     inspector.hidden = true;
     selectedSession = null;
@@ -90,6 +104,12 @@ document.addEventListener("DOMContentLoaded", () => {
   dialogForm.addEventListener("submit", async (event) => {
     if (event.submitter?.value !== "save") return;
     event.preventDefault();
+    if (actionMode === "attendance") {
+      const response = await fetch(`/api/agenda/${selectedSession.id}/asistencia`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paciente_id: selectedSession.paciente_id, asistencia: "asistio" }) });
+      if (response.ok) { selectedSession.asistencia = "asistio"; inspectorContent.textContent += "\nAsistencia: asistió"; dialog.close(); calendar.refetchEvents(); }
+      else alert((await response.json()).error || "No se pudo guardar la asistencia.");
+      return;
+    }
     const data = actionMode === "cancel" ? { estado: "cancelado" } : Object.fromEntries(new FormData(dialogForm));
     if (actionMode === "reschedule") data.estado = "reprogramada";
     const response = await fetch(`/api/sesiones/${selectedSession.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });

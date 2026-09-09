@@ -1,6 +1,6 @@
 """Dashboard routes for the therapy center."""
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 
@@ -107,3 +107,34 @@ def update_session(id):
         return jsonify({"ok": True, "data": response.data[0], "error": None})
     except Exception:
         return jsonify({"ok": False, "error": "No se pudo actualizar la sesion."}), 400
+
+
+@dashboard_bp.patch("/api/agenda/<evento_id>/asistencia")
+def update_attendance(evento_id):
+    """Mark one patient's attendance for an event."""
+    if extensions.supabase is None:
+        return jsonify({"ok": False, "error": "Supabase no esta configurado."}), 503
+    data = request.get_json(silent=True) or {}
+    paciente_id = data.get("paciente_id")
+    asistencia = data.get("asistencia", "asistio")
+    if not paciente_id or asistencia not in {"asistio", "no_asistio", "justificado", "programado"}:
+        return jsonify({"ok": False, "error": "Paciente o estado de asistencia invalido."}), 400
+    try:
+        timestamp = datetime.now(timezone.utc).isoformat()
+        existing = (extensions.supabase.table("registros_sesion_participante")
+                    .select("id")
+                    .eq("evento_id", evento_id)
+                    .eq("paciente_id", paciente_id)
+                    .limit(1).execute().data or [])
+        if existing:
+            response = (extensions.supabase.table("registros_sesion_participante")
+                        .update({"asistencia": asistencia, "actualizado_en": timestamp})
+                        .eq("id", existing[0]["id"]).execute())
+        else:
+            response = (extensions.supabase.table("registros_sesion_participante")
+                        .insert({"evento_id": evento_id, "paciente_id": paciente_id, "asistencia": asistencia, "creado_en": timestamp, "actualizado_en": timestamp})
+                        .execute())
+        return jsonify({"ok": True, "data": (response.data or [None])[0], "error": None})
+    except Exception:
+        current_app.logger.exception("Error actualizando asistencia")
+        return jsonify({"ok": False, "error": "No se pudo guardar la asistencia."}), 400

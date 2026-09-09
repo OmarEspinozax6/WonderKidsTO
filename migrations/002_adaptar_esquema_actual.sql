@@ -1,6 +1,8 @@
 -- Vistas compatibles con el modelo real de WonderKids.
 -- Ejecutar despues de crear las tablas e insertar los datos iniciales.
 
+drop view if exists public.v_agenda_pacientes;
+
 create or replace view public.v_agenda_pacientes as
 select
   e.id,
@@ -10,6 +12,7 @@ select
   e.titulo as tipo_sesion,
   e.estado,
   coalesce(f.estado, 'pendiente') as estado_pago,
+  rsp.asistencia,
   null::text as notas,
   p.id as paciente_id,
   concat_ws(' ', p.nombre, p.apellido) as paciente,
@@ -29,6 +32,13 @@ left join lateral (
   order by f.creado_en desc
   limit 1
 ) f on true
+left join lateral (
+  select r.asistencia
+  from public.registros_sesion_participante r
+  where r.evento_id = e.id and r.paciente_id = p.id
+  order by r.id desc
+  limit 1
+) rsp on true
 where e.paciente_id is not null
    or exists (
      select 1
@@ -54,4 +64,6 @@ grant select on public.pacientes, public.tutores, public.trabajadores, public.ev
   public.eventos_pacientes, public.facturas, public.registros_sesion_participante
 to anon, authenticated, service_role;
 grant insert, update, delete on public.pacientes, public.eventos
+to anon, authenticated, service_role;
+grant insert, update on public.registros_sesion_participante
 to anon, authenticated, service_role;
