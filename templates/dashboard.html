@@ -14,8 +14,8 @@
   <div class="filters" aria-label="Filtrar agenda" data-live-filter>
     <fieldset class="view-switch"><legend>Vista</legend><div class="btn-group" role="group" aria-label="Vista del calendario"><button type="button" class="btn btn-outline-secondary" data-calendar-view="timeGridDay">Día</button><button type="button" class="btn btn-outline-secondary" data-calendar-view="timeGridWeek">Semana</button><button type="button" class="btn btn-outline-secondary" data-calendar-view="dayGridMonth">Mes</button></div></fieldset>
     <label>Fecha<input type="date" name="fecha" value="{{ selected.fecha }}"></label>
-    <label>Terapeuta<select name="terapeuta"><option value="">Todos</option>{% for terapeuta in terapeutas %}<option value="{{ terapeuta.nombre }}" {% if selected.terapeuta == terapeuta.nombre %}selected{% endif %}>{{ terapeuta.nombre }}</option>{% endfor %}</select></label>
-    <label>Paciente<select name="paciente"><option value="">Todos</option>{% for paciente in pacientes %}<option value="{{ paciente.nombre }}" {% if selected.paciente == paciente.nombre %}selected{% endif %}>{{ paciente.nombre }}</option>{% endfor %}</select></label>
+    <label>Terapeuta<select name="terapeuta"><option value="" {% if not selected.terapeuta %}selected{% endif %}>Todos</option>{% for terapeuta in terapeutas %}<option value="{{ terapeuta.nombre }}" {% if selected.terapeuta == terapeuta.nombre %}selected{% endif %}>{{ terapeuta.nombre }}</option>{% endfor %}</select></label>
+    <label>Paciente<select name="paciente"><option value="" {% if not selected.paciente %}selected{% endif %}>Todos</option>{% for paciente in pacientes %}<option value="{{ paciente.nombre }}" {% if selected.paciente == paciente.nombre %}selected{% endif %}>{{ paciente.nombre }}</option>{% endfor %}</select></label>
     <label>Padre o madre<input name="padre" value="{{ selected.padre }}" placeholder="Buscar familiar"></label>
     <label>Especialidad<input name="especialidad" value="{{ selected.especialidad }}" placeholder="Ej. Psicologia"></label>
   </div>

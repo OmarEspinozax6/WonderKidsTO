@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const calendar = new FullCalendar.Calendar(document.querySelector("#calendar"), {
-    locale: "es", timeZone: "America/Lima", initialView: "timeGridDay", initialDate: document.querySelector("#calendar").dataset.initialDate, firstDay: 1,
+    locale: "es", timeZone: "UTC", initialView: "timeGridDay", initialDate: document.querySelector("#calendar").dataset.initialDate, firstDay: 1,
     height: "auto", nowIndicator: true, allDaySlot: false, slotEventOverlap: false, eventMaxStack: 20, slotMinTime: "06:00:00", slotMaxTime: "22:00:00", slotDuration: "00:30:00", slotLabelInterval: "01:00:00",
     eventTimeFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
     headerToolbar: { left: "prev,next today", center: "title", right: "" },
@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!response.ok) throw new Error(result.error);
         const items = result.data || [];
         renderResults(items);
-        success(items.map((item) => ({ id: String(item.id), title: item.paciente || "Sesión grupal", start: `${item.fecha}T${item.hora_inicio}-05:00`, end: `${item.fecha}T${item.hora_fin}-05:00`, extendedProps: item })));
+        success(items.map((item) => ({ id: String(item.id), title: item.paciente || "Sesión grupal", start: `${item.fecha}T${item.hora_inicio}Z`, end: `${item.fecha}T${item.hora_fin}Z`, extendedProps: item })));
       } catch (error) { failure(error); }
     },
     eventContent: (info) => {
